@@ -4,7 +4,7 @@ import 'transaction_model.dart';
 
 class Account {
   final User user;
-  final List<Card> cards;
+  final List<CardDetails> cards;
   final List<Transaction> transactions;
   final double totalBalance;
 
@@ -18,7 +18,7 @@ class Account {
   factory Account.fromJson(Map<String, dynamic> json) {
     return Account(
       user: User.fromJson(json['user'] ?? {}),
-      cards: (json['cards'] as List?)?.map((c) => Card.fromJson(c)).toList() ?? [],
+      cards: (json['cards'] as List?)?.map((c) => CardDetails.fromJson(c)).toList() ?? [],
       transactions: (json['transactions'] as List?)?.map((t) => Transaction.fromJson(t)).toList() ?? [],
       totalBalance: (json['totalBalance'] ?? 0.0).toDouble(),
     );

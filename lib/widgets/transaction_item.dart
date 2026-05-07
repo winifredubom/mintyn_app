@@ -1,67 +1,68 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/transaction_model.dart';
 import '../constants/colors.dart';
 import '../constants/spacing.dart';
 import '../constants/typography.dart';
-import '../utils/formatters.dart';
 
 class TransactionItem extends StatelessWidget {
   final Transaction transaction;
 
-  const TransactionItem({
-    Key? key,
-    required this.transaction,
-  }) : super(key: key);
+  const TransactionItem({super.key, required this.transaction});
 
   @override
   Widget build(BuildContext context) {
     final isIncome = transaction.type == TransactionType.income;
-    final amountColor = isIncome ? AppColors.success : AppColors.accentRed;
+    final amountColor = isIncome ? AppColors.primaryBlue : AppColors.accentRed;
     final amountPrefix = isIncome ? '+' : '-';
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+    return Container(
+      height: 86,
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.borderColor.withValues(alpha: 0.35),
+          ),
+        ),
+      ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.cardBg,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
-              border: Border.all(
-                color: AppColors.borderColor,
-              ),
-            ),
-            child: Icon(
-              _getIconForTransaction(),
-              color: AppColors.textPrimary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
+          _TransactionIcon(icon: _getIconForTransaction()),
+          const SizedBox(width: 22),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  transaction.name,
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    transaction.name,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w400,
+                      height: 1,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Text(
-                  AppFormatters.formatDateTime(transaction.dateTime),
-                  style: AppTypography.captionSmall.copyWith(
-                    color: AppColors.textSecondary,
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    _formatTransactionDate(transaction.dateTime),
+                    style: AppTypography.captionSmall.copyWith(
+                      color: AppColors.textPrimary.withValues(alpha: 0.68),
+                      fontSize: 14,
+                      height: 1,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           Text(
-            '$amountPrefix${AppFormatters.formatCurrency(transaction.amount)}',
-            style: AppTypography.labelMedium.copyWith(
+            '$amountPrefix ${_formatAmount(transaction.amount)}',
+            style: AppTypography.heading2.copyWith(
               color: amountColor,
+              height: 1,
             ),
           ),
         ],
@@ -69,17 +70,53 @@ class TransactionItem extends StatelessWidget {
     );
   }
 
+  String _formatTransactionDate(DateTime dateTime) {
+    return DateFormat('h:mm a • MM-dd-yyyy').format(dateTime).toLowerCase();
+  }
+
+  String _formatAmount(double amount) {
+    if (amount == amount.roundToDouble()) {
+      return amount.toStringAsFixed(0);
+    }
+    return amount.toStringAsFixed(2);
+  }
+
   IconData _getIconForTransaction() {
     final name = transaction.name.toLowerCase();
     if (name.contains('wallet')) {
-      return Icons.account_balance_wallet;
+      return transaction.id == '3'
+          ? Icons.language_rounded
+          : Icons.account_balance_wallet_outlined;
     } else if (name.contains('shopping')) {
-      return Icons.shopping_cart;
+      return Icons.storefront_outlined;
     } else if (name.contains('fee')) {
-      return Icons.account_balance;
+      return Icons.account_balance_outlined;
     } else if (name.contains('saving')) {
-      return Icons.savings;
+      return Icons.paid_outlined;
     }
-    return Icons.receipt;
+    return Icons.receipt_long_outlined;
+  }
+}
+
+class _TransactionIcon extends StatelessWidget {
+  final IconData icon;
+
+  const _TransactionIcon({required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.darkGrey.withValues(alpha: 0.34),
+        border: Border.all(
+          color: AppColors.borderLight.withValues(alpha: 0.95),
+          width: 1.4,
+        ),
+      ),
+      child: Icon(icon, color: AppColors.textPrimary, size: 24),
+    );
   }
 }

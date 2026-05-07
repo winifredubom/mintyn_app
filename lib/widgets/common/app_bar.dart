@@ -3,35 +3,41 @@ import '../../constants/colors.dart';
 import '../../constants/typography.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
+  final String? title;
+  final Widget? titleWidget;
   final bool centerTitle;
   final List<Widget>? actions;
   final Widget? leading;
   final double elevation;
+  final Color backgroundColor;
 
   const CustomAppBar({
-    Key? key,
-    required this.title,
+    super.key,
+    this.title,
+    this.titleWidget,
     this.centerTitle = true,
     this.actions,
     this.leading,
     this.elevation = 0,
-  }) : super(key: key);
+    this.backgroundColor = AppColors.darkGrey,
+  }) : assert(title != null || titleWidget != null);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text(
-        title,
-        style: AppTypography.heading3.copyWith(
-          color: AppColors.textPrimary,
-        ),
-      ),
+      title:
+          titleWidget ??
+          Text(
+            title!,
+            style: AppTypography.heading3.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
       centerTitle: centerTitle,
       actions: actions,
       leading: leading,
       elevation: elevation,
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: backgroundColor,
     );
   }
 

@@ -1,6 +1,6 @@
 enum CardType { physical, virtual }
 
-class Card {
+class CardDetails {
   final String id;
   final String cardNumber;
   final String holderName;
@@ -10,7 +10,7 @@ class Card {
   final CardType type;
   final String cardBrand; // mastercard, visa, etc.
 
-  Card({
+  CardDetails({
     required this.id,
     required this.cardNumber,
     required this.holderName,
@@ -26,8 +26,8 @@ class Card {
     return '•••• •••• •••• ${cardNumber.substring(cardNumber.length - 4)}';
   }
 
-  factory Card.fromJson(Map<String, dynamic> json) {
-    return Card(
+  factory CardDetails.fromJson(Map<String, dynamic> json) {
+    return CardDetails(
       id: json['id'] ?? '',
       cardNumber: json['cardNumber'] ?? '',
       holderName: json['holderName'] ?? '',

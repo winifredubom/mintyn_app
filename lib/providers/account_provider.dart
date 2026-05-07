@@ -17,7 +17,7 @@ class AccountProvider {
     );
 
     final cards = [
-      Card(
+      CardDetails(
         id: '1',
         cardNumber: '5555555555553466',
         holderName: 'Tayyab Sohail',
@@ -27,7 +27,7 @@ class AccountProvider {
         type: CardType.physical,
         cardBrand: 'mastercard',
       ),
-      Card(
+      CardDetails(
         id: '2',
         cardNumber: '5555555555554567',
         holderName: 'Tayyab Sohail',
@@ -37,7 +37,7 @@ class AccountProvider {
         type: CardType.virtual,
         cardBrand: 'mastercard',
       ),
-      Card(
+      CardDetails(
         id: '3',
         cardNumber: '5555555555555678',
         holderName: 'Tayyab Sohail',
@@ -45,16 +45,6 @@ class AccountProvider {
         cvv: '665',
         balance: 3200,
         type: CardType.physical,
-        cardBrand: 'mastercard',
-      ),
-      Card(
-        id: '4',
-        cardNumber: '5555555555556789',
-        holderName: 'Tayyab Sohail',
-        expiryDate: '12/02/2027',
-        cvv: '666',
-        balance: 1800,
-        type: CardType.virtual,
         cardBrand: 'mastercard',
       ),
     ];

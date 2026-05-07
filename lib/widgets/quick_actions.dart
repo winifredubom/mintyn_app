@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../constants/colors.dart';
-import '../constants/spacing.dart';
 import '../constants/typography.dart';
 
 class QuickActions extends StatelessWidget {
@@ -10,80 +9,137 @@ class QuickActions extends StatelessWidget {
   final Function() onMore;
 
   const QuickActions({
-    Key? key,
+    super.key,
     required this.onBillPay,
     required this.onDonations,
     required this.onDeposit,
     required this.onMore,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final actions = [
-      {'icon': Icons.receipt, 'label': 'Bill Pay', 'onTap': onBillPay},
-      {'icon': Icons.volunteer_activism, 'label': 'Donations', 'onTap': onDonations},
-      {'icon': Icons.savings, 'label': 'Deposit', 'onTap': onDeposit},
-      {'icon': Icons.more_horiz, 'label': 'More', 'onTap': onMore},
+      _QuickAction(
+        imagePath: 'assets/icons/billPay.png',
+        label: 'Bill Pay',
+        onTap: (){},
+      ),
+      _QuickAction(
+        imagePath: 'assets/icons/donation.png',
+        label: 'Donations',
+        onTap: (){},
+      ),
+      _QuickAction(
+        imagePath: 'assets/icons/deposit.png',
+        label: 'Deposit',
+        onTap: (){},
+      ),
+      _QuickAction(
+        imagePath: 'assets/icons/grid_view.png',
+        label: 'More',
+        onTap: (){},
+      ),
     ];
 
-    return GridView.count(
-      crossAxisCount: 4,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: AppSpacing.md,
-      crossAxisSpacing: AppSpacing.md,
-      childAspectRatio: 1,
-      children: actions
-          .map(
-            (action) => _ActionButton(
-              icon: action['icon'] as IconData,
-              label: action['label'] as String,
-              onTap: action['onTap'] as Function(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = (constraints.maxWidth / 680).clamp(0.52, 1.0);
+
+        return Container(
+          height: 178 * scale,
+          decoration: BoxDecoration(
+            color: AppColors.cardBg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppColors.borderColor.withValues(alpha: 0.45),
             ),
-          )
-          .toList(),
+          ),
+          child: Row(
+            children: [
+              for (var i = 0; i < actions.length; i++) ...[
+                Expanded(
+                  child: _ActionButton(
+                    imagePath: actions[i].imagePath,
+                    label: actions[i].label,
+                    onTap: actions[i].onTap,
+                    scale: scale,
+                  ),
+                ),
+                if (i != actions.length - 1)
+                  SizedBox(
+                    height: 90 * scale,
+                    child: VerticalDivider(
+                      width: 1,
+                      thickness: 1,
+                      color: AppColors.borderLight.withValues(alpha: 0.65),
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
+class _QuickAction {
+  final String imagePath;
   final String label;
-  final Function() onTap;
+  final VoidCallback onTap;
 
-  const _ActionButton({
-    required this.icon,
+  const _QuickAction({
+    required this.imagePath,
     required this.label,
     required this.onTap,
+  });
+}
+
+class _ActionButton extends StatelessWidget {
+  final String imagePath;
+  final String label;
+  final VoidCallback onTap;
+  final double scale;
+
+  const _ActionButton({
+    required this.imagePath,
+    required this.label,
+    required this.onTap,
+    required this.scale,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            width: 72 * scale,
+            height: 72 * scale,
             decoration: BoxDecoration(
-              color: AppColors.cardBg,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
-              border: Border.all(
-                color: AppColors.borderColor,
+              shape: BoxShape.circle,
+              color: AppColors.darkGrey.withValues(alpha: 0.45),
+            ),
+            child: Center(
+              child: Image.asset(
+                imagePath,
+                width: 38 * scale,
+                height: 38 * scale,
+                color: AppColors.textPrimary,
               ),
             ),
-            child: Icon(
-              icon,
-              color: AppColors.textPrimary,
-              size: 24,
-            ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          SizedBox(height: 22 * scale),
           Text(
             label,
-            style: AppTypography.labelSmall.copyWith(
+            style: AppTypography.heading3.copyWith(
               color: AppColors.textPrimary,
+              fontSize: 24 * scale,
+              fontWeight: FontWeight.w700,
+              height: 1,
             ),
             textAlign: TextAlign.center,
             maxLines: 1,

@@ -1,29 +1,33 @@
+// lib/widgets/card_carousel.dart
+
 import 'package:flutter/material.dart';
-import '../models/card_model.dart';
+import 'package:flutter_svg/svg.dart';
 import '../constants/colors.dart';
 import '../constants/spacing.dart';
 import '../constants/typography.dart';
+import '../models/card_model.dart';
 
 class CardCarousel extends StatefulWidget {
-  final List<Card> cards;
+  final List<CardDetails> cards;
 
-  const CardCarousel({
-    Key? key,
-    required this.cards,
-  }) : super(key: key);
+  const CardCarousel({super.key, required this.cards});
 
   @override
   State<CardCarousel> createState() => _CardCarouselState();
 }
 
 class _CardCarouselState extends State<CardCarousel> {
-  late PageController _pageController;
+  late final PageController _pageController;
   int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(viewportFraction: 0.9);
+    _pageController = PageController(
+      viewportFraction: 0.80,
+      initialPage: widget.cards.length > 1 ? 1 : 0,
+    );
+    _currentIndex = widget.cards.length > 1 ? 1 : 0;
   }
 
   @override
@@ -37,21 +41,21 @@ class _CardCarouselState extends State<CardCarousel> {
     return Column(
       children: [
         SizedBox(
-          height: 220,
+          height: 185,
           child: PageView.builder(
             controller: _pageController,
+            clipBehavior: Clip.none,
+            padEnds: false,
             onPageChanged: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
+              setState(() => _currentIndex = index);
             },
             itemCount: widget.cards.length,
             itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                ),
-                child: CardWidget(card: widget.cards[index]),
+              final isSelected = index == _currentIndex;
+              return AnimatedScale(
+                duration: const Duration(milliseconds: 180),
+                scale: isSelected ? 1 : 0.85,
+                child: FlippableCardWidget(card: widget.cards[index]),
               );
             },
           ),
@@ -67,15 +71,16 @@ class _CardCarouselState extends State<CardCarousel> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
         widget.cards.length,
-        (index) => Container(
+        (index) => AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: _currentIndex == index ? 12 : 8,
+          width: _currentIndex == index ? 22 : 8,
           height: 8,
           decoration: BoxDecoration(
             color: _currentIndex == index
                 ? AppColors.primaryBlue
-                : AppColors.borderColor,
-            borderRadius: BorderRadius.circular(4),
+                : AppColors.textSecondary,
+            borderRadius: BorderRadius.circular(8),
           ),
         ),
       ),
@@ -83,22 +88,21 @@ class _CardCarouselState extends State<CardCarousel> {
   }
 }
 
-class CardWidget extends StatefulWidget {
-  final Card card;
+// ── Flippable Card (used in Card screen carousel) ────────────────────────────
 
-  const CardWidget({
-    Key? key,
-    required this.card,
-  }) : super(key: key);
+class FlippableCardWidget extends StatefulWidget {
+  final CardDetails card;
+
+  const FlippableCardWidget({super.key, required this.card});
 
   @override
-  State<CardWidget> createState() => _CardWidgetState();
+  State<FlippableCardWidget> createState() => _FlippableCardWidgetState();
 }
 
-class _CardWidgetState extends State<CardWidget>
+class _FlippableCardWidgetState extends State<FlippableCardWidget>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
   bool _showFront = true;
 
   @override
@@ -108,9 +112,10 @@ class _CardWidgetState extends State<CardWidget>
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    _animation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -119,203 +124,266 @@ class _CardWidgetState extends State<CardWidget>
     super.dispose();
   }
 
-  void _toggleCard() {
+  void _toggleFlip() {
     if (_showFront) {
       _controller.forward();
     } else {
       _controller.reverse();
     }
-    setState(() {
-      _showFront = !_showFront;
-    });
+    setState(() => _showFront = !_showFront);
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _toggleCard,
+      onTap: _toggleFlip,
       child: AnimatedBuilder(
         animation: _animation,
-        builder: (context, child) {
+        builder: (context, _) {
           final angle = _animation.value * 3.14159;
-          final transform = Matrix4.identity()
-            ..setEntry(3, 2, 0.001)
-            ..rotateY(angle);
+          final isShowingFront = angle <= 1.5708; // pi/2
 
           return Transform(
             alignment: Alignment.center,
-            transform: transform,
-            child: _showFront
-                ? _buildCardFront()
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateY(angle),
+            child: isShowingFront
+                ? CardWidget(card: widget.card)
                 : Transform(
                     alignment: Alignment.center,
                     transform: Matrix4.identity()..rotateY(3.14159),
-                    child: _buildCardBack(),
+                    child: _CardBack(card: widget.card),
                   ),
           );
         },
       ),
     );
   }
+}
 
-  Widget _buildCardFront() {
+// ── Static Card (used in Transaction screen preview) ─────────────────────────
+
+class CardWidget extends StatelessWidget {
+  final CardDetails card;
+
+  const CardWidget({super.key, required this.card});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardBg,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.borderColor,
-          width: 1,
+          color: AppColors.borderLight.withValues(alpha: 0.65),
+        ),
+        image: DecorationImage(
+          image: AssetImage('assets/icons/background.png'), // your image path
+          fit: BoxFit.cover,
         ),
       ),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      clipBehavior: Clip.antiAlias,
+      child: CustomPaint(
+        painter: _CardTexturePainter(),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.contactless, color: AppColors.textPrimary, size: 24),
-              _buildMastercardLogo(),
-            ],
-          ),
-          const Spacer(),
-          Text(
-            widget.card.maskedCardNumber,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 14,
-              letterSpacing: 2,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [const _MastercardLogo()],
+              ),
+              const Spacer(),
+              Row(
                 children: [
-                  Text(
-                    'Card Holder',
-                    style: AppTypography.captionSmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                  SvgPicture.asset(
+                    'assets/icons/chip.svg',
+                    width: 50,
+                    height: 50,
                   ),
-                  Text(
-                    widget.card.holderName,
-                    style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
+                  SizedBox(width: AppSpacing.sm),
+                   SvgPicture.asset(
+                    'assets/icons/Vector.svg',
+                    width: 23,
+                    height: 23,
                   ),
                 ],
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Valid',
-                    style: AppTypography.captionSmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  Text(
-                    widget.card.expiryDate,
-                    style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 18),
+              Text(
+                '•••• •••• •••• ${card.cardNumber.substring(card.cardNumber.length - 4)}',
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2.6,
+                  height: 1,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.clip,
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'CVV',
-                    style: AppTypography.captionSmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  Text(
-                    widget.card.cvv,
-                    style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+                  _CardMeta(label: 'Card Holder', value: card.holderName),
+                  _CardMeta(label: 'Valid', value: card.expiryDate),
+                  _CardMeta(label: 'CVV', value: card.cvv),
                 ],
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCardBack() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBg,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        border: Border.all(
-          color: AppColors.borderColor,
-          width: 1,
         ),
       ),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Balance',
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+    );
+  }
+}
+
+// ── Card Back (shows balance after flip) ─────────────────────────────────────
+
+class _CardBack extends StatelessWidget {
+  final CardDetails card;
+
+  const _CardBack({required this.card});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.borderLight.withValues(alpha: 0.75),
+          width: 1.2,
+        ),
+        image: const DecorationImage(
+          image: AssetImage('assets/icons/background.png'),
+          fit: BoxFit.cover,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: const [_MastercardLogo()],
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            '\$${widget.card.balance.toStringAsFixed(2)}',
-            style: AppTypography.heading2.copyWith(
-              color: AppColors.textPrimary,
+            const Spacer(),
+            Center(
+              child: Column(
+                children: [
+                  Text(
+                    'Balance',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    '\$${card.balance.toStringAsFixed(2)}',
+                    style: AppTypography.heading2.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const Spacer(),
+            // Magnetic strip
+            Container(
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.darkGrey,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+}
+
+// ── Shared Subwidgets ─────────────────────────────────────────────────────────
+
+class _CardMeta extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _CardMeta({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTypography.captionSmall.copyWith(
+            color: AppColors.textSecondary,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          value,
+          style: AppTypography.caption.copyWith(
+            color: AppColors.textPrimary,
+            height: 1,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MastercardLogo extends StatelessWidget {
+  const _MastercardLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Image.asset(
+          'assets/icons/Vector.png',
+          width: 36,
+          height: 28,
+          fit: BoxFit.contain,
+        ),
+        Transform.translate(
+          offset: const Offset(0, -3),
+          child: Text(
+            'mastercard',
+            style: AppTypography.captionSmall.copyWith(
+              color: AppColors.textPrimary,
+              fontSize: 5,
+              height: 1,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CardTexturePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.textPrimary.withValues(alpha: 0.08)
+      ..strokeWidth = 1;
+
+    for (var i = 0; i < 360; i++) {
+      final x = ((i * 41) % size.width.toInt()).toDouble();
+      final y = ((i * 67) % size.height.toInt()).toDouble();
+      canvas.drawCircle(Offset(x, y), i % 6 == 0 ? 1 : 0.55, paint);
+    }
   }
 
-  Widget _buildMastercardLogo() {
-    return Container(
-      width: 45,
-      height: 32,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            left: 0,
-            child: Container(
-              width: 22,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppColors.accentOrange,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 0,
-            child: Container(
-              width: 22,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppColors.accentRed,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

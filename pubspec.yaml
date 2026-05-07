@@ -37,6 +37,8 @@ dependencies:
 
   # Date formatting
   intl: ^0.19.0
+  fl_chart: ^1.2.0
+  flutter_svg: ^2.2.4
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +66,7 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
+   
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -79,6 +82,8 @@ flutter:
   fonts:
     - family: Arimo
       fonts:
-        - asset: assets/fonts/Arimo-Regular.ttf
-        - asset: assets/fonts/Arimo-Bold.ttf
+        - asset: assets/fonts/Arimo/Arimo-Regular.ttf
+        - asset: assets/fonts/Arimo/Arimo-Bold.ttf
+        - asset: assets/fonts/Arimo/Arimo-VariableFont_wght.ttf
+        - asset: assets/fonts/Arimo/Arimo-VariableFont_wght.ttf
           weight: 700

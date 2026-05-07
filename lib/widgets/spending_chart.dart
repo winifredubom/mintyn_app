@@ -1,4 +1,7 @@
+// lib/widgets/spending_chart.dart
+
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../constants/colors.dart';
 import '../constants/spacing.dart';
 import '../constants/typography.dart';
@@ -25,6 +28,8 @@ class SpendingChart extends StatefulWidget {
 
 class _SpendingChartState extends State<SpendingChart> {
   late String _selectedPeriod;
+  int? _touchedIndex;
+  double? _touchedValue;
 
   @override
   void initState() {
@@ -33,195 +38,297 @@ class _SpendingChartState extends State<SpendingChart> {
   }
 
   @override
+  void didUpdateWidget(SpendingChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedPeriod != widget.selectedPeriod) {
+      setState(() {
+        _selectedPeriod = widget.selectedPeriod;
+        _touchedIndex = null;
+        _touchedValue = null;
+      });
+    }
+  }
+
+  // Extend line to edges with padding spots
+  List<FlSpot> get _spots {
+    final spots = <FlSpot>[];
+    spots.add(FlSpot(-0.5, widget.monthlyData.first));
+    for (int i = 0; i < widget.monthlyData.length; i++) {
+      spots.add(FlSpot(i.toDouble(), widget.monthlyData[i]));
+    }
+    spots.add(FlSpot(
+      widget.monthlyData.length - 0.5,
+      widget.monthlyData.last,
+    ));
+    return spots;
+  }
+
+  double get _maxY {
+    final max = widget.monthlyData.reduce((a, b) => a > b ? a : b);
+    return max * 1.3;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.only(
+        top: AppSpacing.lg,
+        bottom: AppSpacing.md,
+      ),
       decoration: BoxDecoration(
         color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        border: Border.all(
-          color: AppColors.borderColor,
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.borderColor, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total Spend',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
+          // ── Header Row ───────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Total Spend',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    '\$${widget.totalSpend}',
-                    style: AppTypography.heading2.copyWith(
-                      color: AppColors.textPrimary,
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      '\$${widget.totalSpend}',
+                      style: AppTypography.labelLarge.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              _buildPeriodDropdown(),
-            ],
+                  ],
+                ),
+                _buildPeriodDropdown(),
+              ],
+            ),
           ),
+
           const SizedBox(height: AppSpacing.lg),
+
+          // ── Chart ────────────────────────────────────────────────
           SizedBox(
-            height: 150,
-            child: _buildChart(),
+            height: 220,
+            child: LineChart(
+              _buildLineChartData(),
+              duration: const Duration(milliseconds: 300),
+            ),
           ),
-          const SizedBox(height: AppSpacing.lg),
-          _buildMonthLabels(),
         ],
       ),
     );
   }
 
-  Widget _buildPeriodDropdown() {
-    return PopupMenuButton<String>(
-      onSelected: (String value) {
-        setState(() {
-          _selectedPeriod = value;
-          widget.onPeriodChanged(value);
-        });
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
-          value: 'Weekly',
-          child: Text('Weekly'),
+  LineChartData _buildLineChartData() {
+    return LineChartData(
+      backgroundColor: Colors.transparent,
+      clipData: const FlClipData.all(),
+
+      // ── Grid ─────────────────────────────────────────────────────
+      gridData: FlGridData(
+        show: true,
+        drawVerticalLine: false,
+        drawHorizontalLine: true,
+        horizontalInterval: _maxY / 4,
+        getDrawingHorizontalLine: (_) => FlLine(
+          color: AppColors.borderColor.withOpacity(0.2),
+          strokeWidth: 1,
         ),
-        const PopupMenuItem<String>(
-          value: 'Monthly',
-          child: Text('Monthly'),
+      ),
+
+      borderData: FlBorderData(show: false),
+
+      // ── Axes — padded so Jan & Jun are fully visible ──────────────
+      minX: -0.5,
+      maxX: (widget.monthlyData.length - 1).toDouble() + 0.5,
+      minY: -(_maxY * 0.12),
+      maxY: _maxY,
+
+      titlesData: FlTitlesData(
+        leftTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
         ),
-        const PopupMenuItem<String>(
-          value: 'Yearly',
-          child: Text('Yearly'),
+        rightTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
+        topTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            interval: 1,
+            reservedSize: 36,
+            getTitlesWidget: (value, meta) {
+              // Only show labels at exact integer positions
+              if (value != value.roundToDouble()) return const SizedBox();
+              final index = value.toInt();
+              if (index < 0 || index >= widget.months.length) {
+                return const SizedBox();
+              }
+              return Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                child: Text(
+                  widget.months[index],
+                  style: AppTypography.captionSmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+
+      // ── Touch ─────────────────────────────────────────────────────
+      lineTouchData: LineTouchData(
+        enabled: true,
+        touchCallback: (event, response) {
+          setState(() {
+            if (response?.lineBarSpots != null &&
+                response!.lineBarSpots!.isNotEmpty) {
+              _touchedIndex = response.lineBarSpots!.first.x.toInt();
+              _touchedValue = response.lineBarSpots!.first.y;
+            } else if (event is FlPointerExitEvent) {
+              _touchedIndex = null;
+              _touchedValue = null;
+            }
+          });
+        },
+        getTouchedSpotIndicator: (barData, spotIndexes) {
+          return spotIndexes.map((index) {
+            return TouchedSpotIndicatorData(
+              FlLine(
+                color: AppColors.textSecondary.withOpacity(0.6),
+                strokeWidth: 1,
+                dashArray: [4, 4],
+              ),
+              FlDotData(
+                getDotPainter: (spot, percent, bar, idx) =>
+                    FlDotCirclePainter(
+                  radius: 6,
+                  color: AppColors.textPrimary,
+                  strokeWidth: 2,
+                  strokeColor: AppColors.primaryBlue,
+                ),
+              ),
+            );
+          }).toList();
+        },
+        touchTooltipData: LineTouchTooltipData(
+          getTooltipColor: (_) => AppColors.textPrimary,
+          tooltipBorderRadius:
+              BorderRadius.circular(AppSpacing.radiusMedium),
+          tooltipPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.xs,
+          ),
+          getTooltipItems: (touchedSpots) {
+            return touchedSpots.map((spot) {
+              return LineTooltipItem(
+                '\$${spot.y.toStringAsFixed(0)}',
+                AppTypography.labelMedium.copyWith(
+                  color: AppColors.darkBg,
+                  fontWeight: FontWeight.bold,
+                ),
+              );
+            }).toList();
+          },
+        ),
+      ),
+
+      // ── Line + Fill ───────────────────────────────────────────────
+      lineBarsData: [
+        LineChartBarData(
+          spots: _spots,
+          isCurved: true,
+          curveSmoothness: 0.4,
+          color: AppColors.primaryBlue,
+          barWidth: 2.5,
+          isStrokeCapRound: true,
+          dotData: const FlDotData(show: false),
+          belowBarData: BarAreaData(
+            show: true,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.primaryBlue.withOpacity(0.6),
+                AppColors.primaryBlue.withOpacity(0.3),
+                AppColors.primaryBlue.withOpacity(0.05),
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ),
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPeriodDropdown() {
+    return PopupMenuButton<String>(
+      onSelected: (value) {
+        setState(() => _selectedPeriod = value);
+        widget.onPeriodChanged(value);
+      },
+      color: AppColors.cardBg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+        side: const BorderSide(color: AppColors.borderColor),
+      ),
+      itemBuilder: (_) => ['Weekly', 'Monthly', 'Yearly']
+          .map(
+            (period) => PopupMenuItem<String>(
+              value: period,
+              child: Text(
+                period,
+                style: AppTypography.bodySmall.copyWith(
+                  color: _selectedPeriod == period
+                      ? AppColors.primaryBlue
+                      : AppColors.textPrimary,
+                ),
+              ),
+            ),
+          )
+          .toList(),
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
           vertical: AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.borderColor),
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
+          border: Border.all(color: AppColors.primaryBlue),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusXL),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
+            const Icon(
+              Icons.expand_more,
+              color: AppColors.textSecondary,
+              size: 16,
+            ),
+            const SizedBox(width: 4),
             Text(
               _selectedPeriod,
               style: AppTypography.labelSmall.copyWith(
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
-            const Icon(
-              Icons.expand_more,
-              color: AppColors.textSecondary,
-              size: 18,
-            ),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildChart() {
-    final maxValue = widget.monthlyData.isNotEmpty
-        ? widget.monthlyData.reduce((a, b) => a > b ? a : b)
-        : 1.0;
-    if (maxValue == 0) return const SizedBox();
-
-    return Stack(
-      children: [
-        // Background grid lines
-        CustomPaint(
-          painter: GridPainter(),
-          size: Size.infinite,
-        ),
-        // Chart bars
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: List.generate(
-            widget.monthlyData.length,
-            (index) {
-              final value = widget.monthlyData[index];
-              final height = (value / maxValue) * 120;
-
-              return Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                      width: 30,
-                      height: height,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            AppColors.chartBlueLight,
-                            AppColors.chartBlue,
-                          ],
-                        ),
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMonthLabels() {
-    return SizedBox(
-      width: double.infinity,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: widget.months
-            .map(
-              (month) => Text(
-                month,
-                style: AppTypography.captionSmall.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
-}
-
-class GridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.borderColor.withOpacity(0.2)
-      ..strokeWidth = 1;
-
-    // Draw horizontal grid lines
-    for (int i = 0; i <= 4; i++) {
-      final y = (size.height / 4) * i;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
