@@ -1,31 +1,30 @@
 // lib/screens/profile_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mintyn_app/widgets/common/async_state.dart';
 import '../constants/colors.dart';
 import '../constants/spacing.dart';
 import '../constants/typography.dart';
 import '../models/account_model.dart';
 import '../providers/account_provider.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  late Account _account;
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _appNotification = true;
 
   @override
-  void initState() {
-    super.initState();
-    _account = AccountProvider.getMockAccount();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final accountAsync = ref.watch(accountProvider);
+    
+   return accountAsync.when(
+  data: (account) {
     return Scaffold(
       backgroundColor: AppColors.darkBg,
       body: SafeArea(
@@ -44,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 22),
-              _ProfileSummary(account: _account),
+              _ProfileSummary(account: account),
               const SizedBox(height: 20),
               Divider(
                 color: AppColors.borderColor.withValues(alpha: 0.35),
@@ -127,9 +126,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-    );
-  }
+       );
+  },
+   loading: () => const LoadingView(),
+        error: (error, _) => ErrorView(
+          onRetry: () => ref.read(accountProvider.notifier).refresh(),
+        ),
+);
+}
 
+}
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -171,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-}
+
 
 class _ProfileSummary extends StatelessWidget {
   final Account account;

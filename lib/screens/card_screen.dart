@@ -3,240 +3,199 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:mintyn_app/screens/transaction_screen.dart';
+import 'package:mintyn_app/widgets/common/async_state.dart';
 import '../constants/colors.dart';
 import '../constants/spacing.dart';
 import '../constants/typography.dart';
 import '../providers/account_provider.dart';
-import '../models/account_model.dart';
 import '../models/card_model.dart';
 import '../widgets/card_carousel.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CardScreen extends StatefulWidget {
+class CardScreen extends ConsumerStatefulWidget {
   const CardScreen({super.key});
 
   @override
-  State<CardScreen> createState() => _CardScreenState();
+  ConsumerState<CardScreen> createState() => _CardScreenState();
 }
 
-class _CardScreenState extends State<CardScreen> {
-  late Account _account;
+class _CardScreenState extends ConsumerState<CardScreen> {
   bool _isPhysical = true;
-
-  // Card settings toggles
   bool _changePinEnabled = true;
   bool _qrPaymentEnabled = true;
   bool _onlineShoppingEnabled = false;
   bool _tapPayEnabled = true;
 
   @override
-  void initState() {
-    super.initState();
-    _account = AccountProvider.getMockAccount();
+  Widget build(BuildContext context) {
+    final accountAsync = ref.watch(accountProvider);
+
+    return Scaffold(
+      backgroundColor: AppColors.darkBg,
+      body: accountAsync.when(
+        loading: () => const LoadingView(),
+        error: (e, _) => ErrorView(
+          onRetry: () => ref.read(accountProvider.notifier).refresh(),
+        ),
+        data: (account) {
+          final filteredCards = account.cards
+              .where((c) => _isPhysical
+                  ? c.type == CardType.physical
+                  : c.type == CardType.virtual)
+              .toList();
+
+          return SafeArea(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Your Card',
+                            style: AppTypography.heading3.copyWith(
+                                color: AppColors.textPrimary)),
+                        const Icon(Icons.more_horiz,
+                            color: AppColors.textPrimary),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        left: AppSpacing.lg, bottom: AppSpacing.md),
+                    child: Text(
+                      '${account.cards.where((c) => c.type == CardType.physical).length} Physical Card, '
+                      '${account.cards.where((c) => c.type == CardType.virtual).length} Virtual Card',
+                      style: AppTypography.bodySmall
+                          .copyWith(color: AppColors.textSecondary),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg),
+                    child: _CardTypeToggle(
+                      isPhysical: _isPhysical,
+                      onToggle: (val) =>
+                          setState(() => _isPhysical = val),
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.lg)),
+                SliverToBoxAdapter(
+                  child: filteredCards.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSpacing.xl),
+                            child: Text(
+                              'No ${_isPhysical ? 'physical' : 'virtual'} cards',
+                              style: AppTypography.bodyMedium.copyWith(
+                                  color: AppColors.textSecondary),
+                            ),
+                          ),
+                        )
+                      : CardCarousel(cards: filteredCards),
+                ),
+                const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.xl)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _CardActionButton(
+                            icon: Icons.ac_unit_rounded,
+                            label: 'Freeze Card',
+                            onTap: () {}),
+                        _CardActionButton(
+                            icon: Icons.visibility_off_outlined,
+                            label: 'Reveal',
+                            onTap: () {}),
+                        _CardActionButton(
+                            icon: Icons.ac_unit_rounded,
+                            label: 'Freeze Card',
+                            onTap: () {}),
+                      ],
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.xl)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg),
+                    child: Text('Card Settings',
+                        style: AppTypography.heading3
+                            .copyWith(color: AppColors.textPrimary)),
+                  ),
+                ),
+                const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.md)),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      _SettingsToggleItem(
+                        icon: Icons.pin_outlined,
+                        label: 'Change Pin',
+                        value: _changePinEnabled,
+                        onChanged: (val) =>
+                            setState(() => _changePinEnabled = val),
+                      ),
+                      _SettingsToggleItem(
+                        icon: Icons.qr_code,
+                        label: 'QR Payment',
+                        value: _qrPaymentEnabled,
+                        onChanged: (val) =>
+                            setState(() => _qrPaymentEnabled = val),
+                      ),
+                      _SettingsToggleItem(
+                        icon: Icons.shopping_bag_outlined,
+                        label: 'Online Shopping',
+                        value: _onlineShoppingEnabled,
+                        onChanged: (val) =>
+                            setState(() => _onlineShoppingEnabled = val),
+                      ),
+                      _SettingsNavItem(
+                        icon: Icons.receipt_long_outlined,
+                        label: 'Card Transactions',
+                        onTap: () => _openScreen(context, const TransactionScreen()),
+                      ),
+                      _SettingsToggleItem(
+                        icon: Icons.contactless_outlined,
+                        label: 'Tap Pay',
+                        value: _tapPayEnabled,
+                        onChanged: (val) =>
+                            setState(() => _tapPayEnabled = val),
+                      ),
+                    ]),
+                  ),
+                ),
+                const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.xl)),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
    void _openScreen(BuildContext context, Widget screen) {
     Navigator.pop(context);
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
-  }
-
-  List<CardDetails> get _displayCards => _account.cards;
-
-  int get _physicalCardCount =>
-      _account.cards.where((card) => card.type == CardType.physical).length;
-
-  int get _virtualCardCount =>
-      _account.cards.where((card) => card.type == CardType.virtual).length;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.darkBg,
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ── App Bar ──────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(28, 30, 28, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Your Card',
-                      style: AppTypography.heading1.copyWith(
-                        color: AppColors.textPrimary,
-                        fontSize: 31,
-                        fontWeight: FontWeight.w700,
-                        height: 1,
-                      ),
-                    ),
-                    const Icon(
-                      Icons.more_horiz,
-                      color: AppColors.textPrimary,
-                      size: 28,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Card Count Subtitle ──────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  left: 28,
-                  top: AppSpacing.sm,
-                  bottom: 26,
-                ),
-                child: Text(
-                  '$_physicalCardCount Physical Card, $_virtualCardCount Virtual Card',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
-                    height: 1,
-                  ),
-                ),
-              ),
-            ),
-
-            // ── Physical / Virtual Tab ───────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: _CardTypeToggle(
-                  isPhysical: _isPhysical,
-                  onToggle: (val) => setState(() => _isPhysical = val),
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 36)),
-
-            // ── Card Carousel ────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: _displayCards.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.xl,
-                      ),
-                      child: Center(
-                        child: Text(
-                          'No cards',
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.only(left: 0),
-                      child: CardCarousel(cards: _displayCards),
-                    ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 22)),
-
-            // ── Card Actions Row ─────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _CardActionButton(
-                      icon: Icons.ac_unit_rounded,
-                      label: 'Freeze Card',
-                      onTap: () {},
-                    ),
-                    _CardActionButton(
-                      icon: Icons.visibility_off_rounded,
-                      label: 'Reveal',
-                      onTap: () {},
-                    ),
-                    _CardActionButton(
-                      icon: Icons.ac_unit_rounded,
-                      label: 'Freeze Card',
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 30),
-                child: Divider(
-                  color: AppColors.borderColor.withValues(alpha: 0.45),
-                  height: 1,
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-            // ── Card Settings Header ─────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: Text(
-                  'Card Settings',
-                  style: AppTypography.heading1.copyWith(
-                    color: AppColors.textPrimary,
-                    fontSize: 32,
-                    fontWeight: FontWeight.w400,
-                    height: 1,
-                  ),
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
-
-            // ── Settings Items ───────────────────────────────────────
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  _SettingsToggleItem(
-                    icon: Icons.password,
-                    label: 'Change Pin',
-                    value: _changePinEnabled,
-                    onChanged: (val) => setState(() => _changePinEnabled = val),
-                  ),
-                  _SettingsToggleItem(
-                    icon: Icons.qr_code_2,
-                    label: 'QR Payment',
-                    value: _qrPaymentEnabled,
-                    onChanged: (val) => setState(() => _qrPaymentEnabled = val),
-                  ),
-                  _SettingsToggleItem(
-                    icon: Icons.storefront_rounded,
-                    label: 'Online Shopping',
-                    value: _onlineShoppingEnabled,
-                    onChanged: (val) =>
-                        setState(() => _onlineShoppingEnabled = val),
-                  ),
-                  _SettingsNavItem(
-                    icon: Icons.credit_card_outlined,
-                    label: 'Card Transactions',
-                    onTap:  () => _openScreen(context, const TransactionScreen()),
-                  ),
-                  _SettingsToggleItem(
-                    svgPath: 'assets/icons/Vector.svg',
-                    label: 'Tap Pay',
-                    value: _tapPayEnabled,
-                    onChanged: (val) => setState(() => _tapPayEnabled = val),
-                  ),
-                ]),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
-          ],
-        ),
-      ),
-    );
   }
 }
 

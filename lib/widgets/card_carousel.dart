@@ -7,6 +7,8 @@ import '../constants/spacing.dart';
 import '../constants/typography.dart';
 import '../models/card_model.dart';
 
+// ── Card Carousel ────────────────────────────────────────────────────────────────
+
 class CardCarousel extends StatefulWidget {
   final List<CardDetails> cards;
 
@@ -88,7 +90,7 @@ class _CardCarouselState extends State<CardCarousel> {
   }
 }
 
-// ── Flippable Card (used in Card screen carousel) ────────────────────────────
+// ── Flippable Card (used in Card screen carousel) ────────────────────────────────
 
 class FlippableCardWidget extends StatefulWidget {
   final CardDetails card;
@@ -137,8 +139,8 @@ class _FlippableCardWidgetState extends State<FlippableCardWidget>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: _toggleFlip,
-      child: AnimatedBuilder(
-        animation: _animation,
+      child: ListenableBuilder(
+        listenable: _animation,
         builder: (context, _) {
           final angle = _animation.value * 3.14159;
           final isShowingFront = angle <= 1.5708; // pi/2
@@ -162,7 +164,7 @@ class _FlippableCardWidgetState extends State<FlippableCardWidget>
   }
 }
 
-// ── Static Card (used in Transaction screen preview) ─────────────────────────
+// ── Static Card (used in Transaction screen preview) ─────────────────────────────
 
 class CardWidget extends StatelessWidget {
   final CardDetails card;
@@ -178,7 +180,7 @@ class CardWidget extends StatelessWidget {
           color: AppColors.borderLight.withValues(alpha: 0.65),
         ),
         image: DecorationImage(
-          image: AssetImage('assets/icons/background.png'), // your image path
+          image: AssetImage('assets/icons/background.png'),
           fit: BoxFit.cover,
         ),
       ),
@@ -203,7 +205,7 @@ class CardWidget extends StatelessWidget {
                     height: 50,
                   ),
                   SizedBox(width: AppSpacing.sm),
-                   SvgPicture.asset(
+                  SvgPicture.asset(
                     'assets/icons/Vector.svg',
                     width: 23,
                     height: 23,
@@ -240,7 +242,7 @@ class CardWidget extends StatelessWidget {
   }
 }
 
-// ── Card Back (shows balance after flip) ─────────────────────────────────────
+// ── Card Back (shows balance after flip) ─────────────────────────────────────────
 
 class _CardBack extends StatelessWidget {
   final CardDetails card;
@@ -307,7 +309,7 @@ class _CardBack extends StatelessWidget {
   }
 }
 
-// ── Shared Subwidgets ─────────────────────────────────────────────────────────
+// ── Shared Subwidgets ────────────────────────────────────────────────────────────
 
 class _CardMeta extends StatelessWidget {
   final String label;

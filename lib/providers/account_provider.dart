@@ -1,13 +1,24 @@
-// Mock data provider
-// This will be converted to use Riverpod or Provider pattern
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/account_model.dart';
 import '../models/user_model.dart';
 import '../models/card_model.dart';
 import '../models/transaction_model.dart';
 
-class AccountProvider {
-  static Account getMockAccount() {
+// ── The async notifier ────────────────────────────────────────────────────────
+
+class AccountNotifier extends AsyncNotifier<Account> {
+  @override
+  Future<Account> build() async {
+    return _fetchAccount();
+  }
+
+  Future<Account> _fetchAccount() async {
+    // Simulate network delay
+    await Future.delayed(const Duration(milliseconds: 900));
+
+    // Simulate occasional error for resilience demo — remove in production
+    // throw Exception('Network error');
+
     final user = User(
       id: '1',
       name: 'Tayyab Sohail',
@@ -45,6 +56,16 @@ class AccountProvider {
         cvv: '665',
         balance: 3200,
         type: CardType.physical,
+        cardBrand: 'mastercard',
+      ),
+      CardDetails(
+        id: '4',
+        cardNumber: '5555555555556789',
+        holderName: 'Tayyab Sohail',
+        expiryDate: '12/02/2027',
+        cvv: '666',
+        balance: 1800,
+        type: CardType.virtual,
         cardBrand: 'mastercard',
       ),
     ];
@@ -99,4 +120,15 @@ class AccountProvider {
       totalBalance: 1200,
     );
   }
+
+  // Call this to retry after an error
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(_fetchAccount);
+  }
 }
+
+// ── The provider ──────────────────────────────────────────────────────────────
+
+final accountProvider =
+    AsyncNotifierProvider<AccountNotifier, Account>(AccountNotifier.new);

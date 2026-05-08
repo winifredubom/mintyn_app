@@ -28,9 +28,20 @@ class Transaction {
       type: json['type'] == 'expense'
           ? TransactionType.expense
           : TransactionType.income,
-      dateTime: DateTime.parse(json['dateTime'] ?? DateTime.now().toString()),
+      dateTime: _parseDateTime(json['dateTime']),
       icon: json['icon'],
     );
+  }
+
+  static DateTime _parseDateTime(dynamic dateTimeStr) {
+    if (dateTimeStr is String) {
+      try {
+        return DateTime.parse(dateTimeStr);
+      } catch (_) {
+        return DateTime.now();
+      }
+    }
+    return DateTime.now();
   }
 
   Map<String, dynamic> toJson() {

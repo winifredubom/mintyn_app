@@ -1,6 +1,8 @@
 // lib/screens/home_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mintyn_app/widgets/common/async_state.dart';
 import '../constants/colors.dart';
 import '../constants/spacing.dart';
 import '../constants/typography.dart';
@@ -8,44 +10,39 @@ import '../providers/account_provider.dart';
 import '../models/account_model.dart';
 import '../screens/card_screen.dart';
 import '../screens/profile_screen.dart';
-import '../screens/transaction_screen.dart';
 import '../widgets/balance_card.dart';
 import '../widgets/quick_actions.dart';
 import '../widgets/transaction_item.dart';
 import '../models/transaction_model.dart';
 import '../widgets/common/app_bar.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  late Account _account;
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedTab = 0; // 0=Weekly, 1=Monthly, 2=Today
   bool _appNotification = true;
   final List<String> _tabs = ['Weekly', 'Monthly', 'Today'];
 
-  @override
-  void initState() {
-    super.initState();
-    _account = AccountProvider.getMockAccount();
-  }
 
-  // Simple tab filter — in real app this would filter by date range
-  List<Transaction> get _filteredTransactions {
-    // All tabs show same mock data since dates are static
-    return _account.transactions;
-  }
+ List<Transaction> _filteredTransactions(Account account) {
+  return account.transactions;
+}
 
   @override
   Widget build(BuildContext context) {
+     final accountAsync = ref.watch(accountProvider);
+
+   return accountAsync.when(
+  data: (account) {
     return Scaffold(
       backgroundColor: AppColors.darkBg,
       drawer: _ProfileNavigationDrawer(
-        account: _account,
+        account: account,
         appNotification: _appNotification,
         onNotificationChanged: (value) {
           setState(() => _appNotification = value);
@@ -61,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             children: [
               TextSpan(
-                text: _account.user.name,
+                text: account.user.name,
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,
@@ -119,8 +116,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: BalanceCard(
-                  balance: _account.totalBalance,
-                  cardBrand: _account.cards.first.cardBrand,
+                  balance: account.totalBalance,
+                  cardBrand: account.cards.isNotEmpty ? account.cards.first.cardBrand : 'mastercard',
                 ),
               ),
             ),
@@ -200,9 +197,9 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
-                  final tx = _filteredTransactions[index];
+                  final tx = _filteredTransactions(account)[index];
                   return TransactionItem(transaction: tx);
-                }, childCount: _filteredTransactions.length),
+                }, childCount: _filteredTransactions(account).length)
               ),
             ),
 
@@ -210,7 +207,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
+        );
+  },
+  loading: () => const LoadingView(),
+        error: (error, _) => ErrorView(
+          onRetry: () => ref.read(accountProvider.notifier).refresh(),
+        ),
+);
   }
 
   void _showSnackBar(BuildContext context, String label) {
