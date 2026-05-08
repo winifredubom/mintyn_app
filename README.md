@@ -242,7 +242,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgments
 
 - Flutter team for the amazing framework
-- Riverpod team for excellent state management solution
+- Riverpod team for excellent state management solutions
 <img width="512" height="1058" alt="ScreenRecording2026-05-08at09 30 37-ezgif com-optimize" src="https://github.com/user-attachments/assets/586e9aab-63e5-4743-9a34-1ef6d69af515" />
 
 
