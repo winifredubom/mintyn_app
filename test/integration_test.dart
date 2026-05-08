@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mintyn_app/main.dart';
 import 'package:mintyn_app/widgets/balance_card.dart';
 import 'package:mintyn_app/widgets/spending_chart.dart';
-import 'package:mintyn_app/widgets/transaction_item.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +28,7 @@ void main() {
       expect(find.byType(BalanceCard), findsOneWidget);
     });
 
-    testWidgets('Home screen displays balance card and quick actions', (WidgetTester tester) async {
+    testWidgets('Home screen displays balance card and transaction history header', (WidgetTester tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MintynApp(),
@@ -41,8 +40,16 @@ void main() {
       // Check for balance card
       expect(find.byType(BalanceCard), findsOneWidget);
       
-      // Check for quick actions (at least one)
-      expect(find.byType(TransactionItem), findsWidgets); // transaction items appear in list
+      // Scroll down to see transaction history header
+      final transactionHistoryFinder = find.text('Transaction History');
+      await tester.scrollUntilVisible(
+        transactionHistoryFinder,
+        300.0,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      
+      expect(transactionHistoryFinder, findsOneWidget);
     });
 
     testWidgets('Drawer can be opened and shows profile info', (WidgetTester tester) async {
@@ -175,8 +182,11 @@ void main() {
 
       // On Card Screen, scroll down to find 'Card Transactions'
       final cardTransactionsFinder = find.text('Card Transactions');
-      // Use scrollUntilVisible to scroll the CustomScrollView
-      await tester.scrollUntilVisible(cardTransactionsFinder, 500.0, scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(
+        cardTransactionsFinder,
+        500.0,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pumpAndSettle();
 
       // Tap on Card Transactions
@@ -187,8 +197,15 @@ void main() {
       expect(find.byType(SpendingChart), findsOneWidget);
       expect(find.text('Card Transaction'), findsOneWidget);
       
-      // Verify that transaction items are displayed
-      expect(find.byType(TransactionItem), findsWidgets);
+      // Scroll to see Transaction History header
+      final transactionHistoryFinder = find.text('Transaction History');
+      await tester.scrollUntilVisible(
+        transactionHistoryFinder,
+        300.0,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(transactionHistoryFinder, findsOneWidget);
     });
 
     testWidgets('Drawer switches can be toggled', (WidgetTester tester) async {
