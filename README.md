@@ -1,3 +1,4 @@
+
 # Mintyn App
 
 A Flutter banking application featuring modern UI with smooth animations, real-time data handling, and responsive design.
@@ -242,5 +243,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Flutter team for the amazing framework
 - Riverpod team for excellent state management solution
-<img width="512" height="1058" alt="0C790A70-965D-464B-9366-186698C5E4F4_1_102_o" src="https://github.com/user-attachments/assets/8555b4b4-e4d8-4630-a6c2-35fd1b73b887" />
+<img width="512" height="1058" alt="ScreenRecording2026-05-08at09 30 37-ezgif com-optimize" src="https://github.com/user-attachments/assets/586e9aab-63e5-4743-9a34-1ef6d69af515" />
+
 
