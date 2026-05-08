@@ -1,4 +1,3 @@
-// lib/screens/transaction_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,8 +31,6 @@ class TransactionScreen extends ConsumerWidget {
     );
   }
 }
-
-// ── Content widget (holds local state for period selection) ──────────────────
 
 class _TransactionContent extends StatefulWidget {
   final Account account;
@@ -70,7 +67,6 @@ class _TransactionContentState extends State<_TransactionContent> {
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // ── App Bar ────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -92,7 +88,6 @@ class _TransactionContentState extends State<_TransactionContent> {
             ),
           ),
 
-          // ── Card Preview ───────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding:
@@ -106,7 +101,6 @@ class _TransactionContentState extends State<_TransactionContent> {
 
           const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
 
-          // ── Spending Chart ─────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding:
@@ -125,7 +119,6 @@ class _TransactionContentState extends State<_TransactionContent> {
 
           const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
 
-          // ── Transaction History Header ─────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding:
@@ -155,7 +148,6 @@ class _TransactionContentState extends State<_TransactionContent> {
 
           const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
 
-          // ── Transaction List ───────────────────────────────────────
           SliverPadding(
             padding:
                 const EdgeInsets.symmetric(horizontal: AppSpacing.lg),

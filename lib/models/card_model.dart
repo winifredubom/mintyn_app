@@ -22,7 +22,6 @@ class CardDetails {
   });
 
   String get maskedCardNumber {
-    // Return masked number like •••• •••• •••• 3466
     return '•••• •••• •••• ${cardNumber.substring(cardNumber.length - 4)}';
   }
 

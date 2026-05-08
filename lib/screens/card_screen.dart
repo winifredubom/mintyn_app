@@ -1,4 +1,3 @@
-// lib/screens/card_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -199,7 +198,6 @@ class _CardScreenState extends ConsumerState<CardScreen> {
   }
 }
 
-// ── Card Type Toggle ─────────────────────────────────────────────────────────
 
 class _CardTypeToggle extends StatelessWidget {
   final bool isPhysical;
@@ -269,7 +267,6 @@ class _ToggleOption extends StatelessWidget {
   }
 }
 
-// ── Card Action Button ───────────────────────────────────────────────────────
 
 class _CardActionButton extends StatelessWidget {
   final IconData icon;
@@ -312,7 +309,6 @@ class _CardActionButton extends StatelessWidget {
   }
 }
 
-// ── Settings Toggle Item ─────────────────────────────────────────────────────
 
 class _SettingsToggleItem extends StatelessWidget {
   final IconData? icon;
@@ -403,7 +399,6 @@ class _SettingsToggleItem extends StatelessWidget {
   }
 }
 
-// ── Settings Nav Item ────────────────────────────────────────────────────────
 
 class _SettingsNavItem extends StatelessWidget {
   final IconData icon;

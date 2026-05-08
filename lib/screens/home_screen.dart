@@ -1,4 +1,3 @@
-// lib/screens/home_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -555,7 +554,6 @@ class _DrawerIcon extends StatelessWidget {
   }
 }
 
-// ── Tab Chip Widget ──────────────────────────────────────────────────────────
 
 class _TabChip extends StatelessWidget {
   final String label;

@@ -7,7 +7,7 @@ class Transaction {
   final double amount;
   final TransactionType type;
   final DateTime dateTime;
-  final String? icon; // icon code or path
+  final String? icon; 
 
   Transaction({
     required this.id,

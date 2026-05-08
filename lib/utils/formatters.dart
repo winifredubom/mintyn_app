@@ -1,12 +1,10 @@
 import 'package:intl/intl.dart';
 
 class AppFormatters {
-  // Format currency
   static String formatCurrency(double amount, {String symbol = '\$'}) {
     return '$symbol${amount.toStringAsFixed(2)}';
   }
 
-  // Format large numbers (1200 -> 1.2K)
   static String formatCompactNumber(double number) {
     if (number >= 1000000) {
       return '${(number / 1000000).toStringAsFixed(1)}M';
@@ -16,22 +14,18 @@ class AppFormatters {
     return number.toStringAsFixed(0);
   }
 
-  // Format date and time
   static String formatDateTime(DateTime dateTime) {
     return DateFormat('hh:mm a • MM-dd-yyyy').format(dateTime);
   }
 
-  // Format date only
   static String formatDate(DateTime dateTime) {
     return DateFormat('MMM dd, yyyy').format(dateTime);
   }
 
-  // Format time only
   static String formatTime(DateTime dateTime) {
     return DateFormat('hh:mm a').format(dateTime);
   }
 
-  // Format relative time (e.g., "2 hours ago")
   static String formatRelativeTime(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
@@ -49,7 +43,6 @@ class AppFormatters {
     }
   }
 
-  // Format phone number
   static String formatPhoneNumber(String phoneNumber) {
     final cleaned = phoneNumber.replaceAll(RegExp(r'[^\d]'), '');
     if (cleaned.length == 10) {

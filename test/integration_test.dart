@@ -16,11 +16,7 @@ void main() {
           child: MintynApp(),
         ),
       );
-
-      // Should show loading initially
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-
-      // Wait for the simulated delay (900ms)
       await tester.pumpAndSettle(const Duration(milliseconds: 1000));
 
       // Should now show home screen content

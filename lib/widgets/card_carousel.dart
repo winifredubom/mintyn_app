@@ -7,8 +7,6 @@ import '../constants/spacing.dart';
 import '../constants/typography.dart';
 import '../models/card_model.dart';
 
-// ── Card Carousel ────────────────────────────────────────────────────────────────
-
 class CardCarousel extends StatefulWidget {
   final List<CardDetails> cards;
 
@@ -90,8 +88,6 @@ class _CardCarouselState extends State<CardCarousel> {
   }
 }
 
-// ── Flippable Card (used in Card screen carousel) ────────────────────────────────
-
 class FlippableCardWidget extends StatefulWidget {
   final CardDetails card;
 
@@ -163,8 +159,6 @@ class _FlippableCardWidgetState extends State<FlippableCardWidget>
     );
   }
 }
-
-// ── Static Card (used in Transaction screen preview) ─────────────────────────────
 
 class CardWidget extends StatelessWidget {
   final CardDetails card;
@@ -242,8 +236,6 @@ class CardWidget extends StatelessWidget {
   }
 }
 
-// ── Card Back (shows balance after flip) ─────────────────────────────────────────
-
 class _CardBack extends StatelessWidget {
   final CardDetails card;
 
@@ -308,8 +300,6 @@ class _CardBack extends StatelessWidget {
     );
   }
 }
-
-// ── Shared Subwidgets ────────────────────────────────────────────────────────────
 
 class _CardMeta extends StatelessWidget {
   final String label;

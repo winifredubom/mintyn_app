@@ -1,5 +1,7 @@
 // lib/widgets/spending_chart.dart
 
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../constants/colors.dart';

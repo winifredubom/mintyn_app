@@ -4,7 +4,6 @@ import '../models/user_model.dart';
 import '../models/card_model.dart';
 import '../models/transaction_model.dart';
 
-// ── The async notifier ────────────────────────────────────────────────────────
 
 class AccountNotifier extends AsyncNotifier<Account> {
   @override
@@ -15,9 +14,6 @@ class AccountNotifier extends AsyncNotifier<Account> {
   Future<Account> _fetchAccount() async {
     // Simulate network delay
     await Future.delayed(const Duration(milliseconds: 900));
-
-    // Simulate occasional error for resilience demo — remove in production
-    // throw Exception('Network error');
 
     final user = User(
       id: '1',
@@ -120,15 +116,11 @@ class AccountNotifier extends AsyncNotifier<Account> {
       totalBalance: 1200,
     );
   }
-
-  // Call this to retry after an error
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(_fetchAccount);
   }
 }
-
-// ── The provider ──────────────────────────────────────────────────────────────
 
 final accountProvider =
     AsyncNotifierProvider<AccountNotifier, Account>(AccountNotifier.new);
